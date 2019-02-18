@@ -400,3 +400,148 @@ import { IonItemSliding } from '@ionic/angular';
 
 ===================================================================================================
 
+* Chap7: Complete prototype:
+
+1. Update UI:
+   - Restore "<ion-sliding-item>"
+   - Change <ion-button> => <ion-item-option>
+   - Add "Full-swipe gesture" (ionswipe) for removeTask()
+     <= This didn't work well: because of "slidingItem"; *everything* was a "swipe" ... 
+        ... and, consequently, every action always wound up be "removeTask()".
+        Commented this out from trask-list.page.html
+
+2.  Use Firebase:
+https://devdactic.com/ionic-4-firebase-angularfire/
+   - Register for developer account, https://firebase.google.com
+     - Firebase plans: { Spark Plan: free, FLame plan: $25/mo, Blaze plan: Pay as you go}
+     <= Spark Plan, [Start Now]
+
+   - Basic steps:
+     1. Login https://firebase.google.com, Add Project > 
+          Name= Ionic2Do => ProjectID= ionic2do-ca67e > [Create Project]
+
+     2. Develop > Database > Cloud Firestore > [Create Database]
+
+     3. Dashboard > Project Overview > Settings > Add web app:
+<script src="https://www.gstatic.com/firebasejs/5.8.3/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyA2sb0y8DBVCpnaVm4itKdxrAsvCThEwpo",
+    authDomain: "ionic2do-ca67e.firebaseapp.com",
+    databaseURL: "https://ionic2do-ca67e.firebaseio.com",
+    projectId: "ionic2do-ca67e",
+    storageBucket: "ionic2do-ca67e.appspot.com",
+    messagingSenderId: "349906342137"
+  };
+  firebase.initializeApp(config);
+</script>
+      <= Save this snippet
+
+     4. Dashboard > Database > [Rules] >
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write;
+    }
+  }
+}  <= This is "Test Mode (wide open)
+
+     5. Install Node modules:
+          npm install firebase --save  => 5.8.3
+          npm install @angular/fire --save  => 5.1.1
+
+     6. Update src/app/app.modules.ts:
+import { AngularFireModule } from '@angular/fire';
+
+import { AngularFirestoreModule } from '@angular/fire/firestore';
+
+import { environment } from '../environments/environment';
+
+...
+@NgModule({
+  declarations: [AppComponent],
+  entryComponents: [],
+  imports: [BrowserModule,
+    ...
+    AngularFireModule.initializeApp(environment.firebase),
+    AngularFirestoreModule]
+  ,
+  providers: [
+    AngularFirestoreModule,
+    ...
+
+     7. Update environments/environment.prod.ts, environment.ts:
+export const environment = {
+  production: false,
+  firebase: {
+    apiKey: 'AIzaSyA2sb0y8DBVCpnaVm4itKdxrAsvCThEwpo',
+    authDomain: 'ionic2do-ca67e.firebaseapp.com',
+    databaseURL: 'https://ionic2do-ca67e.firebaseio.com',
+    projectId: 'ionic2do-ca67e',
+    storageBucket: 'ionic2do-ca67e.appspot.com',
+    messagingSenderId: '349906342137'
+  }
+};
+      
+     8. Update task-list.page.ts:
+import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+...
+export class TaskListPage implements OnInit {
+...
+  tasks: Observable<Task[]>;
+  itemsCollectionRef: AngularFirestoreCollection<Task>;
+
+  constructor(
+    // Firebase:
+    public firestore: AngularFirestore
+  ) { }
+  ...
+  ngOnInit() {
+    this.itemsCollectionRef = this.firestore.collection('tasks');
+    this.tasks = this.itemsCollectionRef.snapshotChanges().pipe(
+      map(actions => {
+        return actions.map(a => {
+          const data = a.payload.doc.data();
+          const id = a.payload.doc.id;
+          return { id, ...data };
+        });
+      })
+    );
+  }
+  ...
+  addTask () {
+    const theNewTask: string = prompt('New Task');
+    if (theNewTask !== '') {
+       this.itemsCollectionRef.add({ title: theNewTask, status: 'open' });
+    }
+  }
+  ...
+  markAsDone (task: Task, slidingItem: IonItemSliding) {
+   this.itemsCollectionRef
+      .doc(task.id)
+      .update({
+         status: task.status
+       });
+    slidingItem.close();
+  }
+  ...
+  removeTask(task: Task, slidingItem: IonItemSliding) {
+    this.itemsCollectionRef.doc(task.id).delete();
+    slidingItem.close();
+  }
+
+     9. Update task-list.page.html (for async/observable):
+    <ion-item-sliding #slidingItem *ngFor="let task of tasks | async">
+
+    10. Test:
+        a) VSCode > Debug > Serve to the browser
+           <= Verify app comes up
+        b) Add some items
+           <= Verify new items appear
+        c) https://firebase.google.com > Project=ionic2Do > Dashboard > 
+             Database > Data > 
+             <= Verify new items appear in Cloud Firestore
+

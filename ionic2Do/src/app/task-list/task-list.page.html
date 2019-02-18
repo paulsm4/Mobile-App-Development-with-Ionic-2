@@ -15,20 +15,23 @@
     <!-- 1) Simple (static) list:
       <ion-item *ngFor="let task of tasks">{{task.title}}</ion-item>
     -->
-    <!-- 2) Sliding items (you have to "slide" before you see icons to the right)             
-    <ion-item-sliding *ngFor="let task of tasks" #slidingItem >
-      <ion-item [ngClass]="{taskDone: task.status === 'done'}">{{task.title}}</ion-item>
-      <ion-item-options side="start">
-        <button ion-button (click)="markAsDone(task, slidingItem)" color="secondary">
+    <!-- 2) Sliding items (you have to "slide" before you see icons to the right) -->            
+    <!-- <ion-item-sliding #slidingItem *ngFor="let task of tasks"> -->
+    <ion-item-sliding #slidingItem *ngFor="let task of tasks | async">
+      <ion-item [ngClass]="{taskDone: task.status === 'done'}">
+        <ion-label>{{task.title}}</ion-label>
+      </ion-item>
+      <!--<ion-item-options side="end" (ionSwipe)="removeTask(task, slidingItem)"> -->
+      <ion-item-options side="end">
+        <ion-item-option ion-button (click)="markAsDone(task, slidingItem)" color="secondary">
           <ion-icon name="checkmark" slot="icon-only"></ion-icon>
-        </button>
-        <button ion-button (click)="removeTask(task, slidingItem)" color="danger">
+        </ion-item-option>
+        <ion-item-option icon-only (click)="removeTask(task, slidingItem)" color="danger">
           <ion-icon name="trash" slot="icon-only"></ion-icon>
-        </button>
+        </ion-item-option>
       </ion-item-options>
     </ion-item-sliding>
-   -->
-    <!-- 3) List + buttons (without "ion-item-sliding"): -->
+    <!-- 3) List + buttons (without "ion-item-sliding"):
     <ion-item *ngFor="let task of tasks" #slidingItem>
       <ion-label [ngClass]="{taskDone: task.status === 'done'}">{{task.title}}</ion-label>
           <button ion-button (click)="markAsDone(task, slidingItem)" color="secondary">
@@ -38,5 +41,6 @@
             <ion-icon name="trash" slot="icon-only"></ion-icon>
           </button>
       </ion-item>
+       -->
     </ion-list>
 </ion-content>
