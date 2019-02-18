@@ -1,0 +1,17 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Tasks</ion-title>
+    <ion-buttons slot="primary">
+      <ion-button (click)="addTask()">
+        <ion-icon slot="start" name="add"></ion-icon>
+        Add Task
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-list>
+    <ion-item *ngFor="let task of tasks">{{task.title}}</ion-item>
+  </ion-list>
+</ion-content>
