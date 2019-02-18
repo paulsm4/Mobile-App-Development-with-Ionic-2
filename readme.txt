@@ -351,4 +351,52 @@ export class TaskListPageModule {}
 
 <<Git checkin>>
 
+===================================================================================================
+
+* Chap7: implement "markAsDone()" and "removeTask()" todo functionality: 
+  - Tried implementing "<ion-item-sliding>"; results "unsatisfactory" in Chrome/browser
+    <= Unable to see the icons for "markAsDone()" or "removeTask()" without "swiping" the screen first
+
+  - CHANGES:
+    - task-list.page.html:
+      -------------------
+    ...
+    <!-- 3) List + buttons (without "ion-item-sliding"): -->
+    <ion-item *ngFor="let task of tasks" #slidingItem>
+      <ion-label [ngClass]="{taskDone: task.status === 'done'}">{{task.title}}</ion-label>
+          <button ion-button (click)="markAsDone(task, slidingItem)" color="secondary">
+            <ion-icon name="checkmark" slot="icon-only"></ion-icon>
+          </button>
+          <button ion-button (click)="removeTask(task, slidingItem)" color="danger">
+            <ion-icon name="trash" slot="icon-only"></ion-icon>
+          </button>
+      </ion-item>
+
+    - task-list.page.ts:
+      -----------------
+import { IonItemSliding } from '@ionic/angular';
+...
+  markAsDone(task: Task, slidingItem: IonItemSliding) {
+    console.log('TaskListPage::markAsDone()');
+    task.status = 'done';
+  }
+
+  removeTask(task: Task, slidingItem: IonItemSliding) {
+    console.log('TaskListPage::removeTask()');
+    task.status = 'removed';
+    const index = this.tasks.indexOf(task);
+    if (index > -1) {
+      this.tasks.splice(index, 1);
+    }
+  }
+
+    - task-list.page.scss:
+      -------------------
+.taskDone {
+    text-decoration: line-through;
+}
+    <= Mark "done" items with strike-through
+       .html template: <ion-label [ngClass]="{taskDone: task.status === 'done'}">{{task.title}}</ion-label>
+
+===================================================================================================
 
