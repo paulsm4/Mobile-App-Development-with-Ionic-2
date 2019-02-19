@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { IonItemSliding } from '@ionic/angular';
+import { IonItemSliding, Platform } from '@ionic/angular';
 
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+import { Dialogs } from '@ionic-native/dialogs/ngx';
 
 import { Task } from '../task';
 
@@ -22,7 +24,9 @@ export class TaskListPage implements OnInit {
 
   constructor(
     // Firebase:
-    public firestore: AngularFirestore
+    public firestore: AngularFirestore,
+    public dialog: Dialogs,
+    private platform: Platform
   ) { }
 
   ngOnInit() {
@@ -48,16 +52,46 @@ export class TaskListPage implements OnInit {
 
   addTask() {
     console.log('TaskListPage::addTask()');
-    // 1) First-cut
+    // 1) First-cut/HTML5 dialog:
     // const theNewTask: string = prompt('New Task');
     // if (theNewTask !== '') {
     //   this.tasks.push({ title: theNewTask, status: 'open' });
     // }
-    // 2) Firebase:
-    const theNewTask: string = prompt('New Task');
-    if (theNewTask !== '') {
-       this.itemsCollectionRef.add({ title: theNewTask, status: 'open' });
-    }
+    // 2) Firebase/HTML5 dialog:
+    // const theNewTask: string = prompt('New Task');
+    // if (theNewTask !== '') {
+    //    this.itemsCollectionRef.add({ title: theNewTask, status: 'open' });
+    // }
+    // 3) Firebase/Ionic Native (Cordova) dialog
+    //    PROBLEM: This only works on device, else "Error: Uncaught (in promise): cordova_not_available"...
+    // this.dialog.prompt('Add a task', 'Ionic2Do', ['Ok', 'Cancel'], '').then(
+    //   theResult => {
+    //     if ((theResult.buttonIndex === 1) && (theResult.input1 !== '')) {
+    //       this.itemsCollectionRef
+    //         .add({
+    //            title: theResult.input1, status: 'open'
+    //        });
+    //     }
+    //   }
+    // );
+    // 4) Runtime check: support either HTML5 (if browser) or Cordova (otherwise)
+    if (this.platform.is('cordova')) {
+      this.dialog.prompt('Add a task', 'Ionic2Do', ['Ok', 'Cancel'], '').then(
+        theResult => {
+          if ((theResult.buttonIndex === 1) && (theResult.input1 !== '')) {
+            this.itemsCollectionRef
+              .add({
+                 title: theResult.input1, status: 'open'
+             });
+          }
+        }
+      );
+      } else {
+        const theNewTask: string = prompt('New Task');
+        if (theNewTask !== '') {
+           this.itemsCollectionRef.add({ title: theNewTask, status: 'open' });
+        }
+      }
   }
 
   markAsDone(task: Task, slidingItem: IonItemSliding) {

@@ -9,6 +9,7 @@ import { AngularFirestoreModule } from '@angular/fire/firestore';
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
+import { Dialogs } from '@ionic-native/dialogs/ngx';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -17,13 +18,14 @@ import { AppRoutingModule } from './app-routing.module';
   declarations: [AppComponent],
   entryComponents: [],
   imports: [
-    BrowserModule, 
-    IonicModule.forRoot(), 
+    BrowserModule,
+    IonicModule.forRoot(),
     AppRoutingModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFirestoreModule],
   providers: [
     AngularFirestoreModule,
+    Dialogs,
     StatusBar,
     SplashScreen,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }

@@ -400,7 +400,7 @@ import { IonItemSliding } from '@ionic/angular';
 
 ===================================================================================================
 
-* Chap7: Complete prototype:
+* Chap7 (Continued): Update UI, persist to Google Firebase:
 
 1. Update UI:
    - Restore "<ion-sliding-item>"
@@ -545,3 +545,100 @@ export class TaskListPage implements OnInit {
              Database > Data > 
              <= Verify new items appear in Cloud Firestore
 
+===================================================================================================
+
+* Chap7: Substitute Ionic Native dialog (for HTML5 task list dialog):
+
+1. ionic cordova plugin add cordova-plugin-dialogs
+   NOTES:
+   - The old command was "ionic plugin add cordova-plugin-dialogs"
+   - Updates config.xml, package.json, package-lock.json
+   - Unfortunately, it did *NOT* update @ionic-native
+     Needed to manually run this, too:
+       npm install @ionic-native/dialogs --save
+   
+2. Update app.module.ts:
+import { Dialogs } from '@ionic-native/dialogs/ngx';
+...
+@NgModule({
+  ...
+  providers: [
+    AngularFirestoreModule,
+    ...
+
+3. Update task-list.page.ts:
+
+4. Test:
+   a) VSCode > Debugger > Serve to browser > Add task >
+ERROR
+core.js:15714
+Error: Uncaught (in promise): cordova_not_available
+
+   b) VSCode > Emulate Android in Browser >
+Failed to load resource: the server responded with a status of 404 (Not Found) [http://localhost:8000/index.html]
+Failed to load resource: the server responded with a status of 404 (Not Found) [http://localhost:8000/favicon.ico]
+   
+   c) VSCode > Run Android on Emulator >
+      <= [cordova-tools]: Error processing "attach": Unable to find adb.
+
+      - WORKAROUND: My Computer > Properties > Advanced > [Environment Variables] > System
+        <= Manually add "d:\Android\sdk\platform-tools" to System %PATH%, restart VSCode
+
+      - NEXT ERROR:[cordova-tools]: Error processing "attach": Unable to find localabstract name of cordova-app
+        - adb devices =>
+List of devices attached
+emulator-5554   device   
+        - WORKAROUND: ionic cordova run android
+          <= This works...
+      - See also:
+https://github.com/Microsoft/vscode-cordova/issues/215
+        <= Alternate workaround: 
+           - cd C:\Users\USERNAME\.vscode\extensions\vsmobile.cordova-tools-1.8.0\out\src\debugger
+           - code cordovaDebugAdapter.js
+             Change "if (socketsInodes.indexOf(...)" => "pathField.indexOf(pid) === -1"
+             <= This is no longer present in current version (1.8)
+
+5. Modified task-list.page.ts so everything will work on either "device" or "browser"
+import { IonItemSliding, Platform } from '@ionic/angular';
+...
+  constructor(
+    public firestore: AngularFirestore,
+    public dialog: Dialogs,
+    private platform: Platform
+  ) { }
+  ...
+  addTask() {
+    if (this.platform.is('cordova')) {
+      this.dialog.prompt('Add a task', 'Ionic2Do', ['Ok', 'Cancel'], '').then(
+        theResult => {
+          if ((theResult.buttonIndex === 1) && (theResult.input1 !== '')) {
+            this.itemsCollectionRef
+              .add({
+                 title: theResult.input1, status: 'open'
+             });
+          }
+        }
+      );
+      } else {
+        const theNewTask: string = prompt('New Task');
+        if (theNewTask !== '') {
+           this.itemsCollectionRef.add({ title: theNewTask, status: 'open' });
+        }
+      }
+  }
+
+6. USAGE:
+   - VSCode > Debug > Serve to browser:
+     <= Works: displays HTML5 dialog
+
+   - ionic cordova emulate android -l -c
+     <= Works: displays Cordova dialog
+
+   - VSCode > Debug > Simulate Android in browser:
+     <= Works: displays Cordova dialog
+
+
+
+
+   
+   
